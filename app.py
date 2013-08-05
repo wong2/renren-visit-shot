@@ -19,6 +19,14 @@ def jsonify(f):
         return Response(json.dumps(f(*args, **kwargs)), mimetype='application/json')
     return wrapped
 
+def auth_required(f):
+    def wrapped(*args, **kwargs):
+        if not 'uid' in session:
+            return {'status': 'error', 'msg': 'no permission'}, 403
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
 @app.route('/')
 def index():
     if 'uid' not in session:
@@ -50,39 +58,73 @@ def auth_callback():
         'avatar': user['avatar'][0]['url']
     })
     result.pop('token_type')
+    result.pop('scope')
 
     kv.hmset('user:%d' % uid, result)
 
     return redirect('/')
 
 @app.route('/get_target')
+@jsonify
+@auth_required
 def get_target():
-    if not 'uid' in session:
-        return 'no permission', 403
-
     uid = session['uid']
     target = kv.hget('user:%d' % uid, 'target')
 
-    return target if target else '0'
+    return {'target': target if target else '0'}
 
 @app.route('/set_target', methods=['POST'])
 @jsonify
+@auth_required
 def set_target():
-    if not 'uid' in session:
-        return {'status': 'error', 'msg': 'no permission'}, 403
-
     uid = session['uid']
     new_target = request.form.get('value')
 
-    old_targe, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
-    if not old_targe:
+    old_target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
+    if not old_target:
         backend.background_add_job(uid, access_token, new_target)
     else:
         backend.background_update_job_target(uid, new_target)
 
     kv.hset('user:%d' % uid, 'target', new_target)
 
-    return {'status': 'ok'}
+    return {
+        'status': 'ok',
+        'first_time': old_target and False or True
+    }
+
+@app.route('/pause', methods=['POST'])
+@jsonify
+@auth_required
+def pause_job():
+    uid = session['uid']
+    backend.background_del_job(uid)
+    kv.hset('user:%d' % uid, 'is_paused', 1)
+    return {
+        'status': 'ok'
+    }
+
+@app.route('/resume', methods=['POST'])
+@jsonify
+@auth_required
+def resume_job():
+    uid = session['uid']
+    target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
+    backend.background_add_job(uid, access_token, target)
+    kv.hset('user:%d' % uid, 'is_paused', 0)
+    return {
+        'status': 'ok'
+    }
+
+@app.route('/status')
+@jsonify
+@auth_required
+def get_status():
+    uid = session['uid']
+    running, now_visit_count, timestamp = backend.background_query_job(uid)
+    return {
+        'running': running
+    }
 
 if __name__ == '__main__':
     app.run(debug=True)
