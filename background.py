@@ -21,7 +21,10 @@ def background_add_job(user_id, token, target):
     s.send(struct.pack('!B', ltoken))
     s.send(user_id + token)
     s.send(struct.pack('!I', target))
+    p = s.recv(1)
     s.close()
+    return p == 'o'
+
 
 def background_del_job(user_id):
     s = _get_socket()
@@ -44,3 +47,16 @@ def background_query_job(user_id):
     now_val = struct.unpack('!I', ret[1:5])[0]
     timestamp = struct.unpack('!Q', ret[5:])[0]
     return (ok, now_val, timestamp)
+
+def background_update_job_target(user_id, newtarget):
+    s = _get_socket()
+    s.send("\x04")
+    luid = len(user_id)
+    s.send(struct.pack('!B', luid))
+    s.send(struct.pack('!B', 1))
+    s.send(user_id)
+    s.send(struct.pack('!I', newtarget))
+    p = s.recv(1)
+    s.close()
+    return p == 'o'
+
