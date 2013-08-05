@@ -5,6 +5,7 @@ import redis
 from flask import Flask, request, session, redirect, render_template, Response
 from config import APP_KEY, APP_SECRET, REDIRECT_URL
 from renren import APIClient
+import background as backend
 
 kv = redis.Redis()
 renren = APIClient(APP_KEY, APP_SECRET, REDIRECT_URL, version=1)
@@ -68,12 +69,18 @@ def get_target():
 @jsonify
 def set_target():
     if not 'uid' in session:
-        return 'no permission', 403
+        return {'status': 'error', 'msg': 'no permission'}, 403
 
     uid = session['uid']
-    target = request.form.get('value')
+    new_target = request.form.get('value')
 
-    kv.hset('user:%d' % uid, 'target', target)
+    old_targe, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
+    if not old_targe:
+        backend.background_add_job(uid, access_token, new_target)
+    else:
+        backend.background_update_job_target(uid, new_target)
+
+    kv.hset('user:%d' % uid, 'target', new_target)
 
     return {'status': 'ok'}
 
