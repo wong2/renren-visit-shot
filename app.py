@@ -33,7 +33,10 @@ def auth_required(f):
 @app.route('/')
 def index():
     if 'uid' not in session:
-        return render_template('login.html', login_url=renren.get_authorize_url())
+        scopes = ['read_user_photo', 'read_user_album', 'send_notification', 
+                  'send_request', 'publish_feed', 'status_update', 'photo_upload',
+                  'create_album', 'operate_like']
+        return render_template('login.html', login_url=renren.get_authorize_url(scope=scopes))
 
     uid = session['uid']
 
