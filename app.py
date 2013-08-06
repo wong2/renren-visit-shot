@@ -86,9 +86,10 @@ def set_target():
     uid = session['uid']
     new_target = request.form.get('value')
 
-    old_target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
-    if not old_target:
+    old_target, access_token, is_paused = kv.hmget('user:%d' % uid, ['target', 'access_token', 'is_paused'])
+    if not old_target or is_paused == '1':
         backend.background_add_job(uid, access_token, new_target)
+        kv.hset('user:%d' % uid, 'is_paused', 0)
     else:
         backend.background_update_job_target(uid, new_target)
 
