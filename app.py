@@ -4,8 +4,8 @@ import json
 import redis
 from functools import wraps
 from flask import Flask, request, session, redirect, render_template, Response
-from config import APP_KEY, APP_SECRET, REDIRECT_URL
-from renren import APIClient
+from config import APP_KEY, APP_SECRET, REDIRECT_URL, ALBUM_NAME
+from renren import APIClient, APIError
 import background as backend
 
 kv = redis.Redis()
@@ -32,18 +32,26 @@ def auth_required(f):
 
 @app.route('/')
 def index():
-    if 'uid' not in session:
+
+    def redirect_to_auth_url():
         scopes = ['read_user_photo', 'read_user_album', 'send_notification', 
                   'send_request', 'publish_feed', 'status_update', 'photo_upload',
                   'create_album', 'operate_like']
         return render_template('login.html', login_url=renren.get_authorize_url(scope=scopes, redirect_uri=REDIRECT_URL))
+
+    if 'uid' not in session:
+        return redirect_to_auth_url()
 
     uid = session['uid']
 
     access_token, uname, avatar, target = kv.hmget('user:%d' % uid, ['access_token', 'uname', 'avatar', 'target'])
     renren.set_access_token(access_token)
 
-    visit_count = renren.users.getProfileInfo(uid=uid, fields='visitors_count').get('visitors_count')
+    try:
+        visit_count = renren.users.getProfileInfo(uid=uid, fields='visitors_count').get('visitors_count')
+    except APIError, e:
+        session.pop('uid', None)
+        return redirect_to_auth_url()
 
     return render_template('index.html', uname=uname.decode('utf-8'), 
                 avatar=avatar, target=int(target) if target else 0, visit_count=visit_count)
@@ -67,6 +75,14 @@ def auth_callback():
     result.pop('scope')
 
     kv.hmset('user:%d' % uid, result)
+
+    renren.set_access_token(result['access_token'])
+    albums = renren.photos.getAlbums(uid=uid, count=1000)
+    for album in albums:
+        if album.get('name') == ALBUM_NAME:
+            break
+    else:
+        print renren.photos.createAlbum(name=ALBUM_NAME)
 
     return redirect('/')
 

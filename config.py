@@ -3,6 +3,8 @@
 APP_KEY = ''
 APP_SECRET = ''
 
+ALBUM_NAME = u''
+
 WEB_SERVER_HOST = ''
 REDIRECT_URL = WEB_SERVER_HOST + '/'
 
