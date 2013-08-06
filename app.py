@@ -6,6 +6,7 @@ from flask import Flask, request, session, redirect, render_template, Response
 from config import APP_KEY, APP_SECRET, REDIRECT_URL
 from renren import APIClient
 import background as backend
+from functools import wraps
 
 kv = redis.Redis()
 renren = APIClient(APP_KEY, APP_SECRET, REDIRECT_URL, version=1)
@@ -15,11 +16,13 @@ app.secret_key = 'j1e'
 
 # jsonify response decorator
 def jsonify(f):
+    @wraps(f)
     def wrapped(*args, **kwargs):
         return Response(json.dumps(f(*args, **kwargs)), mimetype='application/json')
     return wrapped
 
 def auth_required(f):
+    @wraps(f)
     def wrapped(*args, **kwargs):
         if not 'uid' in session:
             return {'status': 'error', 'msg': 'no permission'}, 403
@@ -71,7 +74,7 @@ def get_target():
     uid = session['uid']
     target = kv.hget('user:%d' % uid, 'target')
 
-    return {'target': target if target else '0'}
+    return {'target': int(target) if target else 0}
 
 @app.route('/set_target', methods=['POST'])
 @jsonify
@@ -90,7 +93,7 @@ def set_target():
 
     return {
         'status': 'ok',
-        'first_time': old_target and False or True
+        'first_time': False if old_target else True
     }
 
 @app.route('/pause', methods=['POST'])
