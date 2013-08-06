@@ -2,11 +2,11 @@
 
 import json
 import redis
+from functools import wraps
 from flask import Flask, request, session, redirect, render_template, Response
 from config import APP_KEY, APP_SECRET, REDIRECT_URL
 from renren import APIClient
 import background as backend
-from functools import wraps
 
 kv = redis.Redis()
 renren = APIClient(APP_KEY, APP_SECRET, REDIRECT_URL, version=1)
