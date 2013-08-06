@@ -18,9 +18,7 @@ $('#target-num').editable({
         }
     },
     success: function(response) {
-        if (response.first_time) {
-            show_job_status(true);
-        }
+        show_job_status(true);
     }
 });
 
@@ -29,11 +27,31 @@ $('#set-target-btn').click(function(e){
     $('#target-num').editable('toggle');
 });
 
+var job_status_container = $('#job-status-container');
+job_status_container.on('click', '.job-start-btn', function(){
+    $.post('/resume', function(){
+        set_job_status(true);
+    });
+});
+job_status_container.on('click', '.job-pause-btn', function(){
+    $.post('/pause', function(){
+        set_job_status(false);
+    });
+});
+
+var set_job_status = function(running) {
+    $('#job-status-text').text(running ? '运行中' : '已暂停')
+                         .attr('class', running ? 'job-running' : 'job-stopping');
+
+    $('#job-status-set-btn').text(running ? '暂停' : '开始')
+                            .attr('class', running ? 'job-pause-btn' : 'job-start-btn');
+};
+
 var show_job_status = function(running) {
     function show_status(running) {
-        alert(running);
+        set_job_status(running);
+        $('#job-status-container').show();
     }
-
     if (!running) {
         $.getJSON('/status', function(data) {
             show_status(data.running);

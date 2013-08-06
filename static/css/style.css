@@ -6,7 +6,7 @@
 .container h1 {
     text-align: center;
     font-size: 50px;
-    margin: 100px auto 100px;
+    margin: 100px auto 70px;
 }
 
 .login-container h2 {
@@ -24,4 +24,24 @@
 
 .editable-buttons button i {
     background-position-y: -1px;
+}
+
+#job-status-text.job-running {
+    color: #2ecc71;
+}
+
+#job-status-text.job-stopping {
+    color: #e74c3c;
+}
+
+.info-list {
+    margin-left: 0;
+}
+
+.info-list ul {
+    margin-top: 65px;
+}
+
+.user-info img {
+    margin-left: 50px;
 }
