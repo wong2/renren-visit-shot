@@ -6,30 +6,21 @@
 <div class="home-container">
     <h2>Hi, {{uname}}同学</h2>
     <img src="{{avatar}}" alt="{{uname}}的头像" />
-
-    {% if target %}
-        <ul>
-            <li>
-                <span>当前来访数：{{visit_count}}</span>
-            </li>
-            <li>
-            <span>当前目标：<span id="target-num">{{target}}</span></span>
-                <a href="javascript:void(0)" id="set-target-btn">(修改)</a>
-            </li>
-        </ul>
-        <script type="text/javascript">
-            window.current_target = {{target}};
-            window.visit_count = {{visit_count}};
-        </script>
-    {% else %}
-        <span>当前来访数：{{visit_count}}</span>
-        <span>设置个目标呗亲</span>
-        <form action="/set_target" method="post">
-            <input type="text" name="target" />
-            <input type="submit" value="确定" />
-        </form>
-    {% endif %}
-
+    <ul>
+        <li>
+            <span>当前来访数：{{visit_count}}</span>
+        </li>
+        <li>
+        <span>当前目标：<span id="target-num">{{target}}</span></span>
+            <a href="javascript:void(0)" id="set-target-btn">(修改)</a>
+        </li>
+    </ul>
+    <script type="text/javascript">
+        {% if target %}
+        window.current_target = {{target}};
+        {% endif %}
+        window.visit_count = {{visit_count}};
+    </script>
 </div>
 
 <script type="text/x-template" id="set-target-popover">

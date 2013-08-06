@@ -16,6 +16,11 @@ $('#target-num').editable({
         if (value < window.visit_count) {
             return '目标不能比现在的来访数小啊亲';
         }
+    },
+    success: function(response) {
+        if (response.first_time) {
+            show_job_status(true);
+        }
     }
 });
 
@@ -23,3 +28,23 @@ $('#set-target-btn').click(function(e){
     e.stopPropagation();
     $('#target-num').editable('toggle');
 });
+
+var show_job_status = function(running) {
+    function show_status(running) {
+        alert(running);
+    }
+
+    if (!running) {
+        $.getJSON('/status', function(data) {
+            show_status(data.running);
+        });
+    } else {
+        show_status(running);
+    }
+};
+
+if (!window.current_target) {
+    $('#target-num').editable('toggle');
+} else {
+    show_job_status();
+}
