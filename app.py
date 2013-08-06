@@ -88,9 +88,9 @@ def set_target():
 
     old_target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
     if not old_target:
-        backend.background_add_job(uid, access_token, new_target)
+        backend.background_add_job(str(uid), access_token, new_target)
     else:
-        backend.background_update_job_target(uid, new_target)
+        backend.background_update_job_target(str(uid), new_target)
 
     kv.hset('user:%d' % uid, 'target', new_target)
 
@@ -104,7 +104,7 @@ def set_target():
 @auth_required
 def pause_job():
     uid = session['uid']
-    backend.background_del_job(uid)
+    backend.background_del_job(str(uid))
     kv.hset('user:%d' % uid, 'is_paused', 1)
     return {
         'status': 'ok'
@@ -116,7 +116,7 @@ def pause_job():
 def resume_job():
     uid = session['uid']
     target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
-    backend.background_add_job(uid, access_token, target)
+    backend.background_add_job(str(uid), access_token, target)
     kv.hset('user:%d' % uid, 'is_paused', 0)
     return {
         'status': 'ok'
@@ -127,7 +127,7 @@ def resume_job():
 @auth_required
 def get_status():
     uid = session['uid']
-    running, now_visit_count, timestamp = backend.background_query_job(uid)
+    running, now_visit_count, timestamp = backend.background_query_job(str(uid))
     return {
         'running': running
     }
