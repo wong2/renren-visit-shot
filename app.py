@@ -14,12 +14,14 @@ renren = APIClient(APP_KEY, APP_SECRET, REDIRECT_URL, version=1)
 app = Flask(__name__)
 app.secret_key = 'j1e'
 
+
 # jsonify response decorator
 def jsonify(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
         return Response(json.dumps(f(*args, **kwargs)), mimetype='application/json')
     return wrapped
+
 
 def auth_required(f):
     @wraps(f)
@@ -30,11 +32,12 @@ def auth_required(f):
             return f(*args, **kwargs)
     return wrapped
 
+
 @app.route('/')
 def index():
 
     def redirect_to_auth_url():
-        scopes = ['read_user_photo', 'read_user_album', 'send_notification', 
+        scopes = ['read_user_photo', 'read_user_album', 'send_notification',
                   'send_request', 'publish_feed', 'status_update', 'photo_upload',
                   'create_album', 'operate_like']
         return render_template('login.html', login_url=renren.get_authorize_url(scope=scopes, redirect_uri=REDIRECT_URL))
@@ -53,8 +56,9 @@ def index():
         session.pop('uid', None)
         return redirect_to_auth_url()
 
-    return render_template('index.html', uname=uname.decode('utf-8'), 
-                avatar=avatar, target=int(target) if target else 0, visit_count=visit_count)
+    return render_template('index.html', uname=uname.decode('utf-8'),
+                           avatar=avatar, target=int(target) if target else 0, visit_count=visit_count)
+
 
 @app.route('/callback')
 def auth_callback():
@@ -86,6 +90,7 @@ def auth_callback():
 
     return redirect('/')
 
+
 @app.route('/get_target')
 @jsonify
 @auth_required
@@ -94,6 +99,7 @@ def get_target():
     target = kv.hget('user:%d' % uid, 'target')
 
     return {'target': int(target) if target else 0}
+
 
 @app.route('/set_target', methods=['POST'])
 @jsonify
@@ -116,6 +122,7 @@ def set_target():
         'first_time': False if old_target else True
     }
 
+
 @app.route('/pause', methods=['POST'])
 @jsonify
 @auth_required
@@ -126,6 +133,7 @@ def pause_job():
     return {
         'status': 'ok'
     }
+
 
 @app.route('/resume', methods=['POST'])
 @jsonify
@@ -138,6 +146,7 @@ def resume_job():
     return {
         'status': 'ok'
     }
+
 
 @app.route('/status')
 @jsonify
