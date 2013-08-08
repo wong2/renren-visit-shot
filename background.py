@@ -12,15 +12,17 @@ def _get_socket():
     s.connect((SERVER_HOST, SERVER_PORT))
     return s
 
-def background_add_job(user_id, token, target):
+def background_add_job(user_id, token, refresh_token, target):
     s = _get_socket()
     s.send("\x01")
     user_id = str(user_id)
     luid = len(user_id)
     ltoken = len(token)
+    lrefresh = len(refresh_token)
     s.send(struct.pack('!B', luid))
     s.send(struct.pack('!B', ltoken))
-    s.send(user_id + token)
+    s.send(struct.pack('!B', lrefresh))
+    s.send(user_id + token + refresh_token)
     s.send(struct.pack('!I', int(target)))
     p = s.recv(1)
     s.close()
@@ -34,6 +36,7 @@ def background_del_job(user_id):
     luid = len(user_id)
     s.send(struct.pack('!B', luid))
     s.send(struct.pack('!B', 1))
+    s.send(struct.pack('!B', 1))
     s.send(user_id)
 
 
@@ -43,6 +46,7 @@ def background_query_job(user_id):
     user_id = str(user_id)
     luid = len(user_id)
     s.send(struct.pack('!B', luid))
+    s.send(struct.pack('!B', 1))
     s.send(struct.pack('!B', 1))
     s.send(user_id)
     ret = s.recv(13)
@@ -57,6 +61,7 @@ def background_update_job_target(user_id, newtarget):
     user_id = str(user_id)
     luid = len(user_id)
     s.send(struct.pack('!B', luid))
+    s.send(struct.pack('!B', 1))
     s.send(struct.pack('!B', 1))
     s.send(user_id)
     s.send(struct.pack('!I', int(newtarget)))
