@@ -80,14 +80,6 @@ def auth_callback():
 
     kv.hmset('user:%d' % uid, result)
 
-    renren.set_access_token(result['access_token'])
-    albums = renren.photos.getAlbums(uid=uid, count=1000)
-    for album in albums:
-        if album.get('name') == ALBUM_NAME:
-            break
-    else:
-        print renren.photos.createAlbum(name=ALBUM_NAME)
-
     return redirect('/')
 
 
