@@ -4,7 +4,7 @@ import json
 import redis
 from functools import wraps
 from flask import Flask, request, session, redirect, render_template, Response
-from config import APP_KEY, APP_SECRET, REDIRECT_URL, ALBUM_NAME
+from config import APP_KEY, APP_SECRET, REDIRECT_URL
 from renren import APIClient, APIError
 import background as backend
 
@@ -100,10 +100,10 @@ def set_target():
     uid = session['uid']
     new_target = request.form.get('value')
 
-    old_target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
+    old_target, access_token, refresh_token = kv.hmget('user:%d' % uid, ['target', 'access_token', 'refresh_token'])
     running, _, _ = backend.background_query_job(uid)
     if not running:
-        backend.background_add_job(uid, access_token, new_target)
+        backend.background_add_job(uid, access_token, refresh_token, new_target)
     else:
         backend.background_update_job_target(uid, new_target)
 
@@ -131,8 +131,8 @@ def pause_job():
 @auth_required
 def resume_job():
     uid = session['uid']
-    target, access_token = kv.hmget('user:%d' % uid, ['target', 'access_token'])
-    backend.background_add_job(uid, access_token, target)
+    target, access_token, refresh_token = kv.hmget('user:%d' % uid, ['target', 'access_token', 'refresh_token'])
+    backend.background_add_job(uid, access_token, refresh_token, target)
     return {
         'status': 'ok'
     }
